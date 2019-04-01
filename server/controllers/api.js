@@ -1,7 +1,7 @@
 const express = require('express')
-
+const fs = require('fs')
+const path = require('path')
 const Music = require('../models/music')
-
 const router = module.exports = express.Router()
 
 router.prefix = '/api'
@@ -31,6 +31,31 @@ router.get('/music', (req, res) => {
  * GET /api/music/:id
  */
 router.get('/music/:id', (req, res) => {
+  const id = parseInt(req.params.id || 0)
+  if (!id) {
+    // 不存在这个数据
+    return res.status(404).send('没有该记录')
+  }
+  const item = Music.findOne(id)
+  if (!item) {
+    // 不存在这个数据
+    return res.status(404).send('没有该记录')
+  }
+  const temp = {}
+  Object.assign(temp, item)
+  temp.music = req.app.get('url') + '/uploads/' + temp.music
+  temp.poster = req.app.get('url') + '/uploads/' + temp.poster
+  temp.lyric = req.app.get('url') + '/uploads/' + temp.lyric
+  temp.lyric_content=fs.readFileSync(path.resolve(__dirname, '../www/uploads') +'/'+item.lyric,'utf8')
+  res.jsonp(temp)
+})
+
+
+
+/**
+ * GET /api/music/lrc/:id
+ */
+router.get('/music/lrc/:id', (req, res) => {
   const id = parseInt(req.params.id || 0)
   if (!id) {
     // 不存在这个数据
