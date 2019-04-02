@@ -2,12 +2,12 @@
 
 ## Static pages
 
-https://github.com/zce/music-player-pages
+https://github.com/luoxa/music-player
 
 ## Clone it
 
 ```bash
-$ git clone https://github.com/zce/music-player.git -b vue --depth 1
+$ git clone https://github.com/luoxa/music-player.git -b vue --depth 1
 $ cd music-player
 ```
 
