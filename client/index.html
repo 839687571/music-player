@@ -8,6 +8,7 @@
     <script type="text/javascript" src="libs/vue/vue.min.js"></script>
     <script type="text/javascript" src="libs/vue-resource/vue-resource.min.js"></script>
     <script type="text/javascript" src="libs//vue-router/vue-router.js"></script>
+    <script type="text/javascript" src="libs/vuex/vuex.js"></script>
     <link rel="stylesheet" type="text/css" href="assets/css/normalize.css">
     <link rel="stylesheet" type="text/css" href="assets/css/font-awesome.css">
     <link rel="stylesheet" type="text/css" href="assets/css/app.css">
@@ -53,17 +54,17 @@
       <h2 class="title">{{item.name}}</h2>
       <h3 class="artist">{{item.artist}}</h3>
       <div class="lyric">
-        <p class="previous">&nbsp;{{lrc_prev}}&nbsp;</p>
-        <p class="current">&nbsp;{{lrc_curr}}&nbsp;</p>
-        <p class="next">&nbsp;{{lrc_next}}&nbsp;</p>
+        <p class="previous">&nbsp;{{item.lrc_prev}}&nbsp;</p>
+        <p class="current">&nbsp;{{item.lrc_curr}}&nbsp;</p>
+        <p class="next">&nbsp;{{item.lrc_next}}&nbsp;</p>
       </div>
       <input type="range" value="0" min="0" :max="item.duration" v-model="item.currentTime" @change="progress">
       <div class="controls">
-        <button @click="model=1" :class="{active:model!=1}"><i class="fa fa-retweet"></i></button>
-        <button class="active" @click="prev"><i class="fa fa-backward"></i></button>
-        <button class="active" @click="play"><i :class="{'fa fa-play':!item.playing,'fa fa-pause':item.playing}"></i></button>
-        <button class="active" @click="next"><i class="fa fa-forward"></i></button>
-        <button @click="model=2" :class="{active:model!=2}"><i class="fa fa-random"></i></button>
+        <button @click="item.random=!item.random" :class="{active:!item.random}"><i class="fa fa-retweet"></i></button>
+        <button  @click="prev"><i class="fa fa-backward"></i></button>
+        <button  @click="play"><i class ="fa" :class="{'fa-play':!item.playing,'fa-pause':item.playing}"></i></button>
+        <button  @click="next"><i class="fa fa-forward"></i></button>
+        <button @click="item.random=!item.random" :class="{active:item.random}"><i class="fa fa-random"></i></button>
       </div>
     </div>
 </script>

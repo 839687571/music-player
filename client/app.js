@@ -45,12 +45,7 @@
         template: loadTmpl('item'),
         data() {
             return {
-                item: {},
-                model:1,
-                lrcArr:[],
-                lrc_prev:'',
-                lrc_curr:'',
-                lrc_next:''
+                item: {}
             }
         },
         created () {
@@ -62,18 +57,23 @@
             '$route' (to, from) {
               // 对路由变化作出响应...
                 if(to.name=='item')
-                    this.fetchData()
+                  store.state.random=this.item.random
+                  this.fetchData()
+            },
+            'item.random' (nval, oval){
+              // 同步播放模式状态属性
+              this.$store.state.random=nval
             }
         },
         methods: {
-          //获取数据
+          // 获取数据
           fetchData() {
             const id = this.$route.params.id
             if (!id) return router.push({ name: 'list' })
 
 
             this.$http.jsonp(`${serverUrl}/music/${id}`).then(res => {
-                this.item = { currentTime: 0, playing: false, random: false }
+                this.item = { currentTime: 0, playing: false, random: this.$store.state.random }
                 Object.assign(this.item, res.data)
                 App.audio.src = this.item.music
                 App.audio.autoplay = true
@@ -83,7 +83,7 @@
                 App.audio.addEventListener('timeupdate', () => {
                   this.item.currentTime = App.audio.currentTime
                   this.syncLRC();
-                  if(App.audio.currentTime>=App.audio.duration) App.audio.load()
+                  if(App.audio.currentTime>=App.audio.duration) this.next()
                 })
                 App.audio.addEventListener('play', () => {
                   this.item.playing = true
@@ -98,7 +98,7 @@
               //.catch(error => router.push({ name: 'list' }))
             return { item: {} }
           },
-          //播放
+          // 播放
           play() {
             if (this.item.playing) {
               App.audio.pause()
@@ -107,11 +107,11 @@
             }
             this.item.playing = !this.item.playing
           },
-          //进度控制
+          // 进度控制
           progress() {
             App.audio.currentTime = this.item.currentTime
           },
-          //上一首
+          // 上一首
           prev() {
             this.$http.jsonp(`${serverUrl}/music`).then(res => {
               const ids = res.data.map(s => s.id)
@@ -122,7 +122,7 @@
               router.push({ name: 'item', params: { id: ids[targetIndex] } })
             })
           },
-          //下一首
+          // 下一首
           next() {
             this.$http.jsonp(`${serverUrl}/music`).then(res => {
               const ids = res.data.map(s => s.id)
@@ -130,40 +130,41 @@
               if (targetIndex >= ids.length) {
                 targetIndex = 0
               }
+              if(this.item.random) targetIndex = Math.floor(Math.random()*ids.length)
               router.push({ name: 'item', params: { id: ids[targetIndex] } })
             })
           },
-          //歌词同步
+          // 歌词同步
           syncLRC(){
-            var lrcArr=this.lrcArr, currentTime=this.item.currentTime;
-            for(var i=0;i<lrcArr.length;i++){
+            let lrcArr=this.item.lrcArr, currentTime=this.item.currentTime;
+            for(let i=0;i<lrcArr.length;i++){
                 if(lrcArr[i][0]>=currentTime){
-                    this.lrc_prev=i<2?'•••':lrcArr[i-2][1]
-                    this.lrc_curr=i<1?'•••':lrcArr[i-1][1]
-                    this.lrc_next=lrcArr[i][1]
+                    this.item.lrc_prev=i<2?'•••':lrcArr[i-2][1]
+                    this.item.lrc_curr=i<1?'•••':lrcArr[i-1][1]
+                    this.item.lrc_next=lrcArr[i][1]
                     break
                 }
             }
           },
-          //歌词解析
+          // 歌词解析
           parseLRC() {
                 const lyrics = this.item.lyric_content.split("\n");
-                var lrcArr = [];
-                for(var i=0;i<lyrics.length;i++){
-                    var lyric = decodeURIComponent(lyrics[i]);
-                    var timeReg = /\[\d*:\d*((\.|\:)\d*)*\]/g;
-                    var timeRegExpArr = lyric.match(timeReg);
+                let lrcArr = [];
+                for(let i=0;i<lyrics.length;i++){
+                    let lyric = decodeURIComponent(lyrics[i]);
+                    let timeReg = /\[\d*:\d*((\.|\:)\d*)*\]/g;
+                    let timeRegExpArr = lyric.match(timeReg);
                     if(!timeRegExpArr)continue;
-                    var clause = lyric.replace(timeReg,'');
-                    for(var k = 0,h = timeRegExpArr.length;k < h;k++) {
-                        var t = timeRegExpArr[k];
-                        var min = Number(String(t.match(/\[\d*/i)).slice(1)),
+                    let clause = lyric.replace(timeReg,'');
+                    for(let k = 0,h = timeRegExpArr.length;k < h;k++) {
+                        let t = timeRegExpArr[k];
+                        let min = Number(String(t.match(/\[\d*/i)).slice(1)),
                             sec = Number(String(t.match(/\:\d*/i)).slice(1));
-                        var time = min * 60 + sec;
+                        let time = min * 60 + sec;
                         lrcArr.push([time,clause]);
                     }
                 }
-                this.lrcArr= lrcArr;
+                this.item.lrcArr= lrcArr;
             }
         },
       }
@@ -178,10 +179,19 @@
         ]
     });
 
+    // Vuex
+    const store = new Vuex.Store({
+      state:{
+        random:false
+      }
+    })
+
+    // vue实例
     const App = new Vue({
-        router
+        router,store
     }).$mount("#app");
 
+    // 音频对象
     App.audio = new Audio()
 
 })(this)
